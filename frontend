@@ -1,18 +1,87 @@
-package MySQLDemo;
-
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
     static final String databasePrefix ="bookstore";
     static final String netID ="pblasiman"; // Please enter your netId
     static final String hostName ="localhost"; 
     static final String databaseURL ="jdbc:mysql://"+hostName+"/"+databasePrefix;
-    static final String password="mypass321"; // please enter your own password
+    static final String password="3BNFq6xjZIgJmdhNarAC";
 
 public class frontend {
     public static void run() {
-        
+        this.connectToDatabase();
+        this.showLoginWindow();
     }
+    public void connectToDatabase() {
+        System.out.println("Connecting to the database...");
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            System.out.println("databaseURL:"+ databaseURL);
+            connection = DriverManager.getConnection(databaseURL, netID, password);
+            System.out.println("Successfully connected to the database");
+         }
+        catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        finally {
+            try {
+            connection.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    createLoginWindow() {
+        // Create the frame
+        JFrame frame = new JFrame("Simple GUI");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(1000, 1000);
+        
+        // Create a panel
+        JPanel panel = new JPanel();
+        frame.getContentPane().add(panel);
+        
+        // Create a layout for the panel
+      //  panel.setLayout(new GridLayout(2, 1));
+        
+        JTextField textField = new JTextField("Enter username here");
+        textField.setBounds(50, 50, 200, 30); // x, y, width, height
+        
+        // Create a login button
+        JButton loginButton = new JButton("Login");
+        panel.add(loginButton);
+        
+        // Create a text area
+        JTextArea textArea = new JTextArea("This is a text area");
+        panel.add(textArea);
+        
+        // Add action listener to the search button
+        searchButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Get the selected item from the combo box
+                String selectedColor = (String) comboBox.getSelectedItem();
+                
+                // Update the text area with the selected item
+                textArea.setText("Selected color: " + selectedColor);
+            }
+        });
+        
+        // Make the frame visible
+        frame.setVisible(true);
+    }
+}
 }
