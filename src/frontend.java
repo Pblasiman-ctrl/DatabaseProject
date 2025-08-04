@@ -7,18 +7,20 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+
+
+public class frontend {
     static final String databasePrefix ="bookstore";
     static final String netID ="pblasiman"; // Please enter your netId
     static final String hostName ="localhost"; 
     static final String databaseURL ="jdbc:mysql://"+hostName+"/"+databasePrefix;
     static final String password="3BNFq6xjZIgJmdhNarAC";
 
-public class frontend {
-    public static void run() {
+    public void run() {
         this.connectToDatabase();
         this.showLoginWindow();
     }
-    public void connectToDatabase() {
+    private void connectToDatabase() {
         System.out.println("Connecting to the database...");
         Connection connection = null;
         Statement statement = null;
@@ -44,7 +46,7 @@ public class frontend {
             }
         }
     }
-    createLoginWindow() {
+    private void showLoginWindow() {
         // Create the frame
         JFrame frame = new JFrame("Simple GUI");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -69,19 +71,13 @@ public class frontend {
         panel.add(textArea);
         
         // Add action listener to the search button
-        searchButton.addActionListener(new ActionListener() {
+        loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Get the selected item from the combo box
-                String selectedColor = (String) comboBox.getSelectedItem();
-                
-                // Update the text area with the selected item
-                textArea.setText("Selected color: " + selectedColor);
             }
         });
         
         // Make the frame visible
         frame.setVisible(true);
     }
-}
 }
