@@ -10,14 +10,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-
-
 public class frontend {
-    static final String databasePrefix ="bookstore";
-    static final String netID ="dbadmin";
-    static final String hostName ="34.71.180.162"; 
-    static final String databaseURL ="jdbc:mysql://"+hostName+"/"+databasePrefix;
-    static final String password="QWTgqaHHpbpSAtOsTa07@";
+    static final String databasePrefix = "bookstore";
+    static final String netID = "dbadmin";
+    static final String hostName = "34.71.180.162";
+    static final String databaseURL = "jdbc:mysql://" + hostName + "/" + databasePrefix;
+    static final String password = "QWTgqaHHpbpSAtOsTa07@";
     static final String tableCreationSQLFile = "/workspaces/DatabaseProject/TableCreation.sql";
 
     Connection sqlConnection;
@@ -28,6 +26,7 @@ public class frontend {
         this.showLoginWindow();
         this.attemptConnectionClose();
     }
+
     private void createTables() {
         String sql;
         try {
@@ -48,21 +47,20 @@ public class frontend {
                 }
             }
     }
+
     private void connectToDatabase() {
         System.out.println("Connecting to the database...");
         Connection connection = null;
         Statement statement = null;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("databaseURL:"+ databaseURL);
+            System.out.println("databaseURL:" + databaseURL);
             this.sqlConnection = DriverManager.getConnection(databaseURL, netID, password);
             System.out.println("Successfully connected to the database");
-         }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
             this.attemptConnectionClose();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         } catch (Exception e) {
             System.err.println("Database connection failed:");
@@ -70,31 +68,31 @@ public class frontend {
             this.attemptConnectionClose();
         }
     }
+
     private void showLoginWindow() {
         // Create the frame
         JFrame frame = new JFrame("Simple GUI");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 1000);
-        
+
         // Create a panel
         JPanel panel = new JPanel();
         frame.getContentPane().add(panel);
-        
+
         JTextField textField = new JTextField("Enter username here");
         textField.setBounds(50, 50, 200, 30); // x, y, width, height
-        
+
         // Create a login button
         JButton loginButton = new JButton("Login");
 
         // Create a exit button
         JButton exitButton = new JButton("Exit");
-        
+
         // add buttons
         panel.add(textField);
         panel.add(loginButton);
         panel.add(exitButton);
-        
-        
+
         // Add action listener to the login button
         loginButton.addActionListener(new ActionListener() {
             @Override
@@ -110,10 +108,11 @@ public class frontend {
                 System.exit(0);
             }
         });
-        
+
         // Make the frame visible
         frame.setVisible(true);
     }
+
     private void attemptConnectionClose() {
         if (this.sqlConnection != null) {
             try {
