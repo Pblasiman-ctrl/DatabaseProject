@@ -6,6 +6,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 
 
@@ -15,13 +18,35 @@ public class frontend {
     static final String hostName ="34.71.180.162"; 
     static final String databaseURL ="jdbc:mysql://"+hostName+"/"+databasePrefix;
     static final String password="QWTgqaHHpbpSAtOsTa07@";
+    static final String tableCreationSQLFile = "/workspaces/DatabaseProject/TableCreation.sql";
 
     Connection sqlConnection;
 
     public void run() {
         this.connectToDatabase();
+        this.createTables();
         this.showLoginWindow();
+        this.attemptConnectionClose();
+    }
+    private void createTables() {
+        String sql;
+        try {
+            sql = new String(Files.readAllBytes(Paths.get(tableCreationSQLFile)));
+        } catch (IOException e) {
+            System.out.println("Error reading SQL file: " + tableCreationSQLFile);
+            e.printStackTrace();
+            return;
+        }
+            Statement statement = this.sqlConnection.createStatement()
+            // Split SQL statements by semicolon (basic splitting)
+            String[] commands = sql.split("(?<!\\\\);");
 
+            for (String command : commands) {
+                command = command.trim();
+                if (!command.isEmpty()) {
+                    statement.execute(command);
+                }
+            }
     }
     private void connectToDatabase() {
         System.out.println("Connecting to the database...");
