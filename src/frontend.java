@@ -16,9 +16,12 @@ public class frontend {
     static final String databaseURL ="jdbc:mysql://"+hostName+"/"+databasePrefix;
     static final String password="QWTgqaHHpbpSAtOsTa07@";
 
+    Connection sqlConnection;
+
     public void run() {
         this.connectToDatabase();
         this.showLoginWindow();
+
     }
     private void connectToDatabase() {
         System.out.println("Connecting to the database...");
@@ -27,29 +30,19 @@ public class frontend {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             System.out.println("databaseURL:"+ databaseURL);
-            connection = DriverManager.getConnection(databaseURL, netID, password);
+            this.sqlConnection = DriverManager.getConnection(databaseURL, netID, password);
             System.out.println("Successfully connected to the database");
          }
         catch (ClassNotFoundException e) {
             e.printStackTrace();
+            this.attemptConnectionClose();
         }
         catch (SQLException e) {
             e.printStackTrace();
         } catch (Exception e) {
             System.err.println("Database connection failed:");
             e.printStackTrace();
-        } finally {
-if (connection != null) {
-            try {
-                connection.close();
-                System.out.println("Database connection closed.");
-            } catch (SQLException e) {
-                System.err.println("Failed to close connection:");
-                e.printStackTrace();
-            }
-        } else {
-            System.err.println("Connection was never established.");
-        }
+            this.attemptConnectionClose();
         }
     }
     private void showLoginWindow() {
@@ -67,20 +60,46 @@ if (connection != null) {
         
         // Create a login button
         JButton loginButton = new JButton("Login");
+
+        // Create a exit button
+        JButton exitButton = new JButton("Exit");
+        
+        // add buttons
+        panel.add(textField);
         panel.add(loginButton);
+        panel.add(exitButton);
         
-        // Create a text area
-        JTextArea textArea = new JTextArea("This is a text area");
-        panel.add(textArea);
         
-        // Add action listener to the search button
+        // Add action listener to the login button
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
             }
         });
+
+        // Add action listener to the exit button
+        exitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                attemptConnectionClose();
+                System.exit(0);
+            }
+        });
         
         // Make the frame visible
         frame.setVisible(true);
+    }
+    private void attemptConnectionClose() {
+        if (this.sqlConnection != null) {
+            try {
+                this.sqlConnection.close();
+                System.out.println("Database connection closed.");
+            } catch (SQLException e) {
+                System.err.println("Failed to close connection:");
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("Connection was never established.");
+        }
     }
 }
