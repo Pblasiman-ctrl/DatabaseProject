@@ -1,0 +1,13 @@
+{
+    "java.project.referencedLibraries": {
+        "include": [
+            "lib/**/*.jar",
+            "jar/mysql-connector-j-9.0.0.jar"
+        ],
+        "exclude": [
+            "DatabaseProject.jar"
+        ]
+    },
+    "maven.view": "hierarchical",
+    "java.dependency.syncWithFolderExplorer": false
+}

@@ -11,10 +11,10 @@ import java.awt.event.ActionListener;
 
 public class frontend {
     static final String databasePrefix ="bookstore";
-    static final String netID ="pblasiman"; // Please enter your netId
-    static final String hostName ="localhost"; 
+    static final String netID ="dbadmin";
+    static final String hostName ="34.71.180.162"; 
     static final String databaseURL ="jdbc:mysql://"+hostName+"/"+databasePrefix;
-    static final String password="3BNFq6xjZIgJmdhNarAC";
+    static final String password="QWTgqaHHpbpSAtOsTa07@";
 
     public void run() {
         this.connectToDatabase();
@@ -35,15 +35,21 @@ public class frontend {
         }
         catch (SQLException e) {
             e.printStackTrace();
-        }
-        
-        finally {
+        } catch (Exception e) {
+            System.err.println("Database connection failed:");
+            e.printStackTrace();
+        } finally {
+if (connection != null) {
             try {
-            connection.close();
-            }
-            catch (SQLException e) {
+                connection.close();
+                System.out.println("Database connection closed.");
+            } catch (SQLException e) {
+                System.err.println("Failed to close connection:");
                 e.printStackTrace();
             }
+        } else {
+            System.err.println("Connection was never established.");
+        }
         }
     }
     private void showLoginWindow() {
@@ -55,9 +61,6 @@ public class frontend {
         // Create a panel
         JPanel panel = new JPanel();
         frame.getContentPane().add(panel);
-        
-        // Create a layout for the panel
-      //  panel.setLayout(new GridLayout(2, 1));
         
         JTextField textField = new JTextField("Enter username here");
         textField.setBounds(50, 50, 200, 30); // x, y, width, height
