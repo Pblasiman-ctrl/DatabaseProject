@@ -2,34 +2,31 @@ CREATE DATABASE bookstore;
 use bookstore;
 
 CREATE TABLE author (
-author_id BIGINT,
-author_name VARCHAR(2000),
-primary key(author_id));
+author_id BIGINT Primary Key,
+author_name VARCHAR(2000));
 
 CREATE TABLE category (
-category_id BIGINT,
-category_name VARCHAR(2000),
-primary key(category_id));
+category_id INT Primary Key,
+category_name VARCHAR(2000));
 
-CREATE TABLE format (
-format_id BIGINT,
-format_name VARCHAR(2000),
-primary key(format_id));
+-- format was a key word in .sql swapped to "formatting"
+CREATE TABLE formatting (
+format_id BIGINT primary key,
+format_name VARCHAR(2000));
 
 CREATE TABLE book (
-ibsn_13 BIGINT,
+ibsn_13 BIGINT Primary Key,
 bestseller_rank BIGINT,
 description VARCHAR(5000),
-format BIGINT,
+format_id INT, -- FK to format, do we need to change the name of the column?
 internal_id BIGINT,
-illustrations VARCHAR(2000),
-imprint VARCHAR(2000),
 language VARCHAR(20),
 publication_date DATETIME,
 average_rating FLOAT,
 rating_count BIGINT,
-title VARCHAR(2000),
-primary key(ibsn_13));
+weight DECIMAL(8,2),
+title VARCHAR(2000));
+
 
 CREATE TABLE reader (
 user_id VARCHAR(200),
@@ -45,7 +42,7 @@ PRIMARY KEY (ibsn_13,user_id));
 
 CREATE TABLE categoryOf (
 ibsn_13 BIGINT,
-category_id BIGINT,
+category_id INT,
 FOREIGN KEY (ibsn_13) REFERENCES book(ibsn_13),
 FOREIGN KEY (category_id) REFERENCES category(category_id),
 PRIMARY KEY (ibsn_13, category_id));
