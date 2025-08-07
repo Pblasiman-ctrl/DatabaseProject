@@ -43,6 +43,14 @@ FOREIGN KEY (ibsn_13) REFERENCES book(ibsn_13),
 FOREIGN KEY (user_id) REFERENCES reader(user_id),
 PRIMARY KEY (ibsn_13,user_id));
 
+CREATE TABLE categoryOf (
+ibsn_13 BIGINT,
+category_id BIGINT,
+FOREIGN KEY (ibsn_13) REFERENCES book(ibsn_13),
+FOREIGN KEY (category_id) REFERENCES category(category_id),
+PRIMARY KEY (ibsn_13, category_id));
+    
+    
 CREATE TABLE favoriteOf (
 ibsn_13 BIGINT,
 user_id VARCHAR(200),
