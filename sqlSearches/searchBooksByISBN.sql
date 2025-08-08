@@ -1,0 +1,8 @@
+DELIMITER $$
+
+CREATE PROCEDURE SearchBooksByISBN(IN inputIsbn BIGINT)
+BEGIN
+    SELECT * FROM book WHERE ibsn_13 = inputIsbn;
+END $$
+
+DELIMITER ;
