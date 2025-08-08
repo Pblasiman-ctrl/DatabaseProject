@@ -9,5 +9,7 @@
         ]
     },
     "maven.view": "hierarchical",
-    "java.dependency.syncWithFolderExplorer": false
+    "java.dependency.syncWithFolderExplorer": false,
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "makefile.configureOnOpen": false
 }
