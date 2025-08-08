@@ -14,6 +14,14 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import javax.swing.table.DefaultTableModel;
+import java.util.Vector;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableColumn;
 
 public class frontend {
     static final String databasePrefix = "bookstore";
@@ -24,6 +32,8 @@ public class frontend {
     static final String tableCreationSQLFile = "/workspaces/DatabaseProject/TableCreation.sql";
 
     Connection sqlConnection;
+    String loggedInUser;
+    JPanel contentPanel;
 
     public void run() {
         this.connectToDatabase();
@@ -87,7 +97,7 @@ public class frontend {
 
     private void showLoginWindow() {
         // Create the frame
-        JFrame frame = new JFrame("Simple GUI");
+        JFrame frame = new JFrame("Login Page");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 1000);
 
@@ -98,7 +108,7 @@ public class frontend {
 
         // Create components
         JTextField usernameField = new JTextField("Enter username here");
-        JTextField passwordField = new JTextField("Enter username here");
+        JPasswordField passwordField = new JPasswordField();
         JButton loginButton = new JButton("Login");
         JButton registerButton = new JButton("Register");
         JButton exitButton = new JButton("Exit");
@@ -136,20 +146,14 @@ public class frontend {
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            }
-        });
-
-        // add action listener to the login button
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
                 String username = usernameField.getText();
-                String password = passwordField.getText();
+                String password = new String(passwordField.getPassword());
 
-                if (doesUserExist(username, password)) {
+                if (frontend.this.doesUserExist(username, password)) {
                     System.out.println("User exists, proceeding to main UI.");
+                    frontend.this.loggedInUser = username;
                     frame.dispose(); // Close the login window
-                    showUI(); // Show the main UI
+                    frontend.this.showNavigation(); // Show the main UI
                 } else {
                     JOptionPane.showMessageDialog(frame,
                             "Invalid username or password. Please check your username or password or register.");
@@ -163,38 +167,22 @@ public class frontend {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String username = usernameField.getText();
-                String password = passwordField.getText();
+                String password = new String(passwordField.getPassword());
 
-                if (doesUserExist(username, password)) {
+                if (frontend.this.doesUserExist(username, password)) {
                     JOptionPane.showMessageDialog(frame,
                             "User already exists. Please log in or choose a different username.");
                 } else {
-                    Boolean registered = registerUser(username, password);
+                    Boolean registered = frontend.this.registerUser(username, password);
                     if (!registered) {
                         JOptionPane.showMessageDialog(frame, "Registration failed. Please try again.");
                         return;
                     } else {
                         System.out.println("User registered successfully.");
+                        frontend.this.loggedInUser = username;
                         frame.dispose(); // Close the login window
-                        showUI(); // Show the main UI
+                        frontend.this.showNavigation(); // Show the main UI
                     }
-                }
-            }
-
-            private boolean registerUser(String username, String password) {
-                String sql = "{CALL register_reader(?, ?)}";
-
-                try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
-                    stmt.setString(1, username);
-                    stmt.setString(2, password);
-                    stmt.execute();
-                    System.out.println("User registered successfully.");
-                    return true;
-                } catch (SQLException ex) {
-                    System.err.println("SQL error during registration:");
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "Error registering user. " + ex.getMessage());
-                    return false;
                 }
             }
         });
@@ -203,7 +191,7 @@ public class frontend {
         exitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                attemptConnectionClose();
+                frontend.this.attemptConnectionClose();
                 System.exit(0);
             }
         });
@@ -211,7 +199,7 @@ public class frontend {
         // Set the frame to close on exit
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                attemptConnectionClose();
+                frontend.this.attemptConnectionClose();
             }
         });
 
@@ -219,59 +207,155 @@ public class frontend {
         frame.setVisible(true);
     }
 
-    private void showUI() {
+    private void showNavigation() {
         JFrame frame = new JFrame("Bookstore Management System");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.setSize(1000, 700);
 
         // Main container with BorderLayout
         JPanel mainPanel = new JPanel(new BorderLayout());
 
-        // Center welcome label
+        // create left navigation panel
+        JPanel leftNavPanel = new JPanel();
+        leftNavPanel.setLayout(new BoxLayout(leftNavPanel, BoxLayout.Y_AXIS));
+        leftNavPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+
+        JButton browseBoughtButton = new JButton("Browse Bought Books");
+        JButton browseFavoritesButton = new JButton("Browse Favorite Books");
+        JButton searchBooksButton = new JButton("Search Books");
+        JButton browseByFavGenresButton = new JButton("Browse Books by Favorites");
+
+        // add buttons to the left navigation panel
+        leftNavPanel.add(browseBoughtButton);
+        leftNavPanel.add(Box.createVerticalStrut(10));
+        leftNavPanel.add(browseFavoritesButton);
+        leftNavPanel.add(Box.createVerticalStrut(10));
+        leftNavPanel.add(searchBooksButton);
+        leftNavPanel.add(Box.createVerticalStrut(10));
+        leftNavPanel.add(browseByFavGenresButton);
+
+        // top bar with logout button
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JButton logoutButton = new JButton("Logout");
+        JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        logoutPanel.add(logoutButton);
+        topPanel.add(logoutPanel, BorderLayout.EAST);
+
+        // main plane
+        contentPanel = new JPanel();
         JLabel label = new JLabel("Welcome to the Bookstore Management System!");
         label.setHorizontalAlignment(SwingConstants.CENTER);
-        mainPanel.add(label, BorderLayout.CENTER);
+        label.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        contentPanel.setLayout(new BorderLayout());
+        contentPanel.add(label, BorderLayout.CENTER);
 
-        // Top panel for logout button, aligned to the right
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton logoutButton = new JButton("Logout");
+        // add components to the main panel
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(leftNavPanel, BorderLayout.WEST);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
 
+        // event listeners for buttons
         logoutButton.addActionListener(e -> {
-            attemptConnectionClose();
             frame.dispose();
-            showLoginWindow();
+            frontend.this.showLoginWindow();
         });
 
-        // Set the frame to close on exit
+        browseBoughtButton.addActionListener(e -> {
+            String sql = "{CALL FindBooksBoughtByUser(?)}";
+            try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+                stmt.setString(1, this.loggedInUser);
+                ResultSet rs = stmt.executeQuery();
+                JTable table = new JTable(buildTableModel(rs));
+                JScrollPane scrollPane = new JScrollPane(table);
+                contentPanel.removeAll();
+                frame.add(scrollPane, BorderLayout.CENTER);
+                contentPanel.add(scrollPane, BorderLayout.CENTER);
+            } catch (SQLException ex) {
+                System.err.println("SQL error during browsing bought books:");
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error retrieving bought books. " + ex.getMessage());
+            }
+            contentPanel.revalidate(); // Refresh layout
+            contentPanel.repaint(); // Refresh display
+        });
+
+        browseFavoritesButton.addActionListener(e -> {
+            String sql = "{CALL FindUsersFavorites(?)}";
+            try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+                stmt.setString(1, this.loggedInUser);
+                ResultSet rs = stmt.executeQuery();
+
+                // Build the model from result set
+                DefaultTableModel model = buildTableModel(rs);
+
+                // Add Action column to the model
+                model.addColumn("Action");
+                for (int i = 0; i < model.getRowCount(); i++) {
+                    model.setValueAt("Buy", i, model.getColumnCount() - 1);
+                }
+
+                // Create the JTable
+                JTable table = new JTable(model);
+
+                // Set renderers/editors for the Action column (last column)
+                TableColumn actionColumn = table.getColumnModel().getColumn(table.getColumnCount() - 1);
+                actionColumn.setCellRenderer(new ButtonRenderer());
+                actionColumn.setCellEditor(new ButtonEditor(new JCheckBox(), table));
+
+                // Display in scroll pane
+                JScrollPane scrollPane = new JScrollPane(table);
+                contentPanel.removeAll();
+                contentPanel.add(scrollPane, BorderLayout.CENTER);
+                contentPanel.revalidate();
+                contentPanel.repaint();
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error retrieving favorites: " + ex.getMessage());
+            }
+            contentPanel.revalidate(); // Refresh layout
+            contentPanel.repaint(); // Refresh display
+        });
+
+        searchBooksButton.addActionListener(e -> {
+            frontend.this.showSearchBookPanel();
+        });
+
+        browseByFavGenresButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(frame, "Feature not yet implemented: Browse Books by Favorites.");
+        });
+
+        // if we close the window, we want to close the connection
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                attemptConnectionClose();
+                frontend.this.attemptConnectionClose();
             }
         });
 
-        topPanel.add(logoutButton);
-        mainPanel.add(topPanel, BorderLayout.NORTH);
-
-        // Add main panel to frame
+        // add panel to the frame and make it visible
         frame.getContentPane().add(mainPanel);
         frame.setVisible(true);
     }
 
-    private void attemptConnectionClose() {
-        if (this.sqlConnection != null) {
-            try {
-                this.sqlConnection.close();
-                System.out.println("Database connection closed.");
-            } catch (SQLException e) {
-                System.err.println("Failed to close connection:");
-                e.printStackTrace();
-            }
-        } else {
-            System.err.println("Connection was never established.");
+    private boolean registerUser(String username, String password) {
+        String sql = "{CALL register_reader(?, ?)}";
+
+        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            stmt.execute();
+            System.out.println("User registered successfully.");
+            return true;
+        } catch (SQLException ex) {
+            System.err.println("SQL error during registration:");
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error registering user. " + ex.getMessage());
+            return false;
         }
     }
 
-    boolean doesUserExist(String username, String password) {
+    private boolean doesUserExist(String username, String password) {
         String sql = "{CALL find_reader(?, ?, ?)}";
 
         try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
@@ -281,16 +365,175 @@ public class frontend {
 
             stmt.execute();
 
-            if (stmt.getInt(3) == 1) {
-                return true;
-            } else {
-                return false;
-            }
+            return stmt.getInt(3) == 1;
         } catch (SQLException ex) {
             System.err.println("SQL error during user check:");
             ex.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error checking user credentials. " + ex.getMessage());
             return false;
+        }
+    }
+
+    private void showSearchBookPanel() {
+        contentPanel.removeAll();
+        contentPanel.setLayout(new BorderLayout());
+
+        // search panel
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+
+        JTextField titleField = new JTextField();
+        JTextField authorField = new JTextField();
+        JTextField categoryField = new JTextField();
+        JTextField isbnField = new JTextField();
+        JButton searchButton = new JButton("Search");
+
+        formPanel.add(new JLabel("Title:"));
+        formPanel.add(titleField);
+        formPanel.add(new JLabel("Author:"));
+        formPanel.add(authorField);
+        formPanel.add(new JLabel("Category:"));
+        formPanel.add(categoryField);
+        formPanel.add(new JLabel("ISBN:"));
+        formPanel.add(isbnField);
+        formPanel.add(new JLabel()); // Spacer
+        formPanel.add(searchButton);
+
+        contentPanel.add(formPanel, BorderLayout.NORTH);
+
+        // --- Result Table Area ---
+        JPanel resultPanel = new JPanel(new BorderLayout());
+        contentPanel.add(resultPanel, BorderLayout.CENTER);
+
+        // --- Search Button Logic ---
+        searchButton.addActionListener(ev -> {
+            resultPanel.removeAll();
+
+            String title = titleField.getText().trim();
+            String author = authorField.getText().trim();
+            String category = categoryField.getText().trim();
+            String isbn = isbnField.getText().trim();
+            /*
+             * // Call stored procedure
+             * String sql = "{CALL search_books(?, ?, ?, ?)}";
+             * 
+             * try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+             * stmt.setString(1, title);
+             * stmt.setString(2, author);
+             * stmt.setString(3, category);
+             * stmt.setString(4, isbn);
+             * 
+             * try (ResultSet rs = stmt.executeQuery()) {
+             * JTable table = new JTable(buildTableModel(rs));
+             * table.setAutoCreateRowSorter(true);
+             * JScrollPane scrollPane = new JScrollPane(table);
+             * resultPanel.add(scrollPane, BorderLayout.CENTER);
+             * }
+             * 
+             * } catch (SQLException ex) {
+             * JOptionPane.showMessageDialog(null, "Error searching books: " +
+             * ex.getMessage());
+             * ex.printStackTrace();
+             * }
+             */
+
+            resultPanel.revalidate();
+            resultPanel.repaint();
+        });
+
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    private void attemptConnectionClose() {
+        if (this.sqlConnection != null) {
+            try {
+                if (!this.sqlConnection.isClosed()) {
+                    this.sqlConnection.close();
+                    System.out.println("Database connection closed.");
+                }
+            } catch (SQLException e) {
+                System.err.println("Failed to close connection:");
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("Connection was never established.");
+        }
+    }
+
+    private static DefaultTableModel buildTableModel(ResultSet rs) throws SQLException {
+        ResultSetMetaData metaData = rs.getMetaData();
+
+        int columnCount = metaData.getColumnCount();
+        Vector<String> columnNames = new Vector<>();
+        for (int column = 1; column <= columnCount; column++) {
+            columnNames.add(metaData.getColumnName(column));
+        }
+        Vector<Vector<Object>> data = new Vector<>();
+        while (rs.next()) {
+            Vector<Object> row = new Vector<>();
+            for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
+                row.add(rs.getObject(columnIndex));
+            }
+            data.add(row);
+        }
+        return new DefaultTableModel(data, columnNames);
+    }
+
+    class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            setText((value == null) ? "Buy" : value.toString());
+            return this;
+        }
+    }
+
+    class ButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private String label;
+        private boolean clicked;
+        private JTable table;
+        private int row;
+
+        public ButtonEditor(JCheckBox checkBox, JTable table) {
+            super(checkBox);
+            this.table = table;
+
+            button = new JButton();
+            button.setOpaque(true);
+
+            button.addActionListener(e -> {
+                fireEditingStopped();
+                String bookTitle = table.getValueAt(row, 0).toString();
+                String userId = frontend.this.loggedInUser;
+                // buyBook(bookTitle, userId);
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            this.row = row;
+            this.label = (value == null) ? "Buy" : value.toString();
+            button.setText(label);
+            clicked = true;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return label;
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            clicked = false;
+            return super.stopCellEditing();
         }
     }
 }
