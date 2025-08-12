@@ -14,7 +14,7 @@ format_id BIGINT primary key,
 format_name VARCHAR(2000));
 
 CREATE TABLE book (
-ibsn_13 BIGINT Primary Key,
+isbn_13 BIGINT Primary Key,
 bestseller_rank BIGINT,
 description VARCHAR(5000),
 format_id INT, -- FK to format, do we need to change the name of the column?
@@ -33,31 +33,31 @@ user_password VARCHAR(200),
 primary key(user_id));
 
 CREATE TABLE buys (
-ibsn_13 BIGINT,
+isbn_13 BIGINT,
 user_id VARCHAR(200),
-FOREIGN KEY (ibsn_13) REFERENCES book(ibsn_13),
+FOREIGN KEY (isbn_13) REFERENCES book(isbn_13),
 FOREIGN KEY (user_id) REFERENCES reader(user_id),
-PRIMARY KEY (ibsn_13,user_id));
+PRIMARY KEY (isbn_13,user_id));
 
 CREATE TABLE categoryOf (
-ibsn_13 BIGINT,
+isbn_13 BIGINT,
 category_id INT,
-FOREIGN KEY (ibsn_13) REFERENCES book(ibsn_13),
+FOREIGN KEY (isbn_13) REFERENCES book(isbn_13),
 FOREIGN KEY (category_id) REFERENCES category(category_id),
-PRIMARY KEY (ibsn_13, category_id));
+PRIMARY KEY (isbn_13, category_id));
     
     
 CREATE TABLE favoriteOf (
-ibsn_13 BIGINT,
+isbn_13 BIGINT,
 user_id VARCHAR(200),
-FOREIGN KEY (ibsn_13) REFERENCES book(ibsn_13),
+FOREIGN KEY (isbn_13) REFERENCES book(isbn_13),
 FOREIGN KEY (user_id) REFERENCES reader(user_id),
-PRIMARY KEY (ibsn_13,user_id));
+PRIMARY KEY (isbn_13,user_id));
 
 CREATE TABLE writes (
-ibsn_13 BIGINT,
+isbn_13 BIGINT,
 author_id BIGINT,
-FOREIGN KEY (ibsn_13) REFERENCES book(ibsn_13),
+FOREIGN KEY (isbn_13) REFERENCES book(isbn_13),
 FOREIGN KEY (author_id) REFERENCES author(author_id),
-PRIMARY KEY (ibsn_13,author_id));
+PRIMARY KEY (isbn_13,author_id));
 
