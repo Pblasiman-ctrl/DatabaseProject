@@ -1,0 +1,4 @@
+1) Put ssh file into an accessible file location on your laptop.
+2) Call "ssh -i <Windows file path to ssh file> username@34.71.180.162" at the Windows terminal.
+3) At the Bash prompt, enter "mysql -u dbadmin -p"
+4) For the password, enter QWTgqaHHpbpSAtOsTa07@
