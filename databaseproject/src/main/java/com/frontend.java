@@ -11,16 +11,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import javax.swing.table.DefaultTableModel;
 import java.util.Vector;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import javax.swing.table.TableColumn;
 
 public class frontend {
@@ -34,6 +31,7 @@ public class frontend {
     Connection sqlConnection;
     String loggedInUser;
     JPanel contentPanel;
+    JTable table;
 
     public void run() {
         this.connectToDatabase();
@@ -266,11 +264,29 @@ public class frontend {
             try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
                 stmt.setString(1, this.loggedInUser);
                 ResultSet rs = stmt.executeQuery();
-                JTable table = new JTable(buildTableModel(rs));
+                // Build the model from result set
+                DefaultTableModel model = buildTableModel(rs);
+
+                // Add Action column to the model
+                model.addColumn("Action");
+                for (int i = 0; i < model.getRowCount(); i++) {
+                    model.setValueAt("Buy", i, model.getColumnCount() - 1);
+                }
+
+                // Create the JTable
+                this.table = new JTable(model);
+
+                // Set renderers/editors for the Action column (last column)
+                TableColumn actionColumn = table.getColumnModel().getColumn(table.getColumnCount() - 1);
+                actionColumn.setCellRenderer(new ButtonRenderer("Sell"));
+                actionColumn.setCellEditor(new SellButtonEditor(this, table));
+
+                // Display in scroll pane
                 JScrollPane scrollPane = new JScrollPane(table);
                 contentPanel.removeAll();
-                frame.add(scrollPane, BorderLayout.CENTER);
                 contentPanel.add(scrollPane, BorderLayout.CENTER);
+                contentPanel.revalidate();
+                contentPanel.repaint();
             } catch (SQLException ex) {
                 System.err.println("SQL error during browsing bought books:");
                 ex.printStackTrace();
@@ -300,8 +316,8 @@ public class frontend {
 
                 // Set renderers/editors for the Action column (last column)
                 TableColumn actionColumn = table.getColumnModel().getColumn(table.getColumnCount() - 1);
-                actionColumn.setCellRenderer(new ButtonRenderer());
-                actionColumn.setCellEditor(new ButtonEditor(new JCheckBox(), table));
+                actionColumn.setCellRenderer(new ButtonRenderer("Buy"));
+                actionColumn.setCellEditor(new BuyButtonEditor(this, table));
 
                 // Display in scroll pane
                 JScrollPane scrollPane = new JScrollPane(table);
@@ -401,11 +417,11 @@ public class frontend {
 
         contentPanel.add(formPanel, BorderLayout.NORTH);
 
-        // --- Result Table Area ---
+        // show results panel
         JPanel resultPanel = new JPanel(new BorderLayout());
         contentPanel.add(resultPanel, BorderLayout.CENTER);
 
-        // --- Search Button Logic ---
+        // add search button action listener
         searchButton.addActionListener(ev -> {
             resultPanel.removeAll();
 
@@ -479,61 +495,21 @@ public class frontend {
         }
         return new DefaultTableModel(data, columnNames);
     }
+    public void reloadBoughtTable() {
+    String sql = "CALL FindBooksBoughtByUser(?)"; // or your SELECT query
+    try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+        stmt.setString(1, loggedInUser);
+        ResultSet rs = stmt.executeQuery();
 
-    class ButtonRenderer extends JButton implements TableCellRenderer {
-        public ButtonRenderer() {
-            setOpaque(true);
-        }
+        TableModel model = buildTableModel(rs);
+        this.table.setModel(model);
 
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
-            setText((value == null) ? "Buy" : value.toString());
-            return this;
-        }
-    }
-
-    class ButtonEditor extends DefaultCellEditor {
-        private JButton button;
-        private String label;
-        private boolean clicked;
-        private JTable table;
-        private int row;
-
-        public ButtonEditor(JCheckBox checkBox, JTable table) {
-            super(checkBox);
-            this.table = table;
-
-            button = new JButton();
-            button.setOpaque(true);
-
-            button.addActionListener(e -> {
-                fireEditingStopped();
-                String bookTitle = table.getValueAt(row, 0).toString();
-                String userId = frontend.this.loggedInUser;
-                // buyBook(bookTitle, userId);
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                boolean isSelected, int row, int column) {
-            this.row = row;
-            this.label = (value == null) ? "Buy" : value.toString();
-            button.setText(label);
-            clicked = true;
-            return button;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return label;
-        }
-
-        @Override
-        public boolean stopCellEditing() {
-            clicked = false;
-            return super.stopCellEditing();
-        }
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(null, "Error loading data: " + ex.getMessage());
     }
 }
+}
+
+
+    
