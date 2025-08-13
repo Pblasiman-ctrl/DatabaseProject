@@ -1,0 +1,115 @@
+USE bookstore2;
+
+SET autocommit = 0;
+SET unique_checks = 0;
+SET foreign_key_checks = 0;
+
+LOAD DATA LOCAL INFILE 'C:\\Users\\pblasima\\Downloads\\dataset_no_nonsense.csv'
+INTO TABLE book
+CHARACTER SET cp1250
+FIELDS TERMINATED BY ',' 
+OPTIONALLY ENCLOSED BY '"'
+ESCAPED BY ''
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(author_id, bestseller_rank, category_id, description, format_id, isbn_13, publication_date, average_rating, rating_count, title, weight);
+
+COMMIT;
+
+SET foreign_key_checks = 1;
+SET unique_checks = 1;
+SET autocommit = 1;
+
+USE bookstore2;
+
+SET autocommit = 0;
+SET unique_checks = 0;
+SET foreign_key_checks = 0;
+
+LOAD DATA LOCAL INFILE 'C:\\Users\\pblasima\\Downloads\\dataset_no_nonsense.csv'
+INTO TABLE book
+CHARACTER SET cp1250
+FIELDS TERMINATED BY ',' 
+OPTIONALLY ENCLOSED BY '"'
+ESCAPED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(author_id, bestseller_rank, category_id, description, format_id, isbn_13, @pub_date, average_rating, rating_count, title, weight)
+SET publication_date = STR_TO_DATE(@pub_date, '%m/%d/%Y');
+
+COMMIT;
+
+SET foreign_key_checks = 1;
+SET unique_checks = 1;
+SET autocommit = 1;
+
+USE bookstore2;
+
+SET autocommit = 0;
+SET unique_checks = 0;
+SET foreign_key_checks = 0;
+
+LOAD DATA LOCAL INFILE 'C:\\Users\\pblasima\\Downloads\\categories.csv'
+INTO TABLE category
+CHARACTER SET cp1250
+FIELDS TERMINATED BY ',' 
+OPTIONALLY ENCLOSED BY '"'
+ESCAPED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(category_id, category_name);
+
+COMMIT;
+
+SET foreign_key_checks = 1;
+SET unique_checks = 1;
+SET autocommit = 1;
+
+
+
+
+USE bookstore2;
+
+SET autocommit = 0;
+SET unique_checks = 0;
+SET foreign_key_checks = 0;
+
+LOAD DATA LOCAL INFILE 'C:\\Users\\pblasima\\Downloads\\formats.csv'
+INTO TABLE format
+CHARACTER SET cp1250
+FIELDS TERMINATED BY ',' 
+OPTIONALLY ENCLOSED BY '"'
+ESCAPED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(format_id, format_name);
+
+COMMIT;
+
+SET foreign_key_checks = 1;
+SET unique_checks = 1;
+SET autocommit = 1;
+
+
+
+USE bookstore2;
+
+SET autocommit = 0;
+SET unique_checks = 0;
+SET foreign_key_checks = 0;
+
+LOAD DATA LOCAL INFILE 'C:\\Users\\pblasima\\Downloads\\authors.csv'
+INTO TABLE author
+CHARACTER SET cp1250
+FIELDS TERMINATED BY ',' 
+OPTIONALLY ENCLOSED BY '"'
+ESCAPED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(author_id, author_name);
+
+COMMIT;
+
+SET foreign_key_checks = 1;
+SET unique_checks = 1;
+SET autocommit = 1;
