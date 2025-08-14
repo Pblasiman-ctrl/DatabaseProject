@@ -8,7 +8,7 @@ CREATE PROCEDURE SearchBooksMultiFilter (
     IN inputFormat VARCHAR(2000)
 )
 BEGIN
-    SELECT b.title as "Title", a.author_name as "Author", c.category_name as "Category", f.format_name as "Format", b.isbn_13 as "ISBN", b.bestseller_rank as "Bestseller Ranking", b.rating_avg as "Average Rating"
+    SELECT b.title as "Title", a.author_name as "Author", c.category_name as "Category", f.format_name as "Format", b.isbn_13 as "ISBN", b.description as "Description", b.bestseller_rank as "Bestseller Ranking", b.rating_avg as "Average Rating"
     FROM book b
     LEFT JOIN author a ON b.author_id = a.author_id
     LEFT JOIN format f ON f.format_id = b.format_id
