@@ -4,7 +4,7 @@ CREATE PROCEDURE SearchBooksByCategoryID(IN inputCategoryID INT)
 BEGIN
     SELECT b.*
     FROM book b
-    JOIN categoryOf c ON b.ibsn_13 = c.ibsn_13
+    JOIN categoryOf c ON b.isbn_13 = c.isbn_13
     WHERE c.category_id = inputCategoryID;
 END $$
 
