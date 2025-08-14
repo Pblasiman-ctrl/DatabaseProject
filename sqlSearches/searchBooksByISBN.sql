@@ -2,7 +2,7 @@ DELIMITER $$
 
 CREATE PROCEDURE SearchBooksByISBN(IN inputIsbn BIGINT)
 BEGIN
-    SELECT * FROM book WHERE ibsn_13 = inputIsbn;
+    SELECT * FROM book WHERE isbn_13 = inputIsbn;
 END $$
 
 DELIMITER ;
