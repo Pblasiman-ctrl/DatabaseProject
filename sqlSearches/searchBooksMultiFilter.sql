@@ -17,7 +17,7 @@ BEGIN
       AND (inputAuthorName IS NULL OR TRIM(inputAuthorName) = '' OR a.author_name LIKE CONCAT('%', inputAuthorName, '%'))
       AND (inputCategoryName IS NULL OR TRIM(inputCategoryName) = '' OR c.category_name LIKE CONCAT('%', inputCategoryName, '%'))
       AND (inputFormat IS NULL OR TRIM(inputFormat) = '' OR f.format_name LIKE CONCAT('%', inputFormat, '%'))
-      AND (inputIsbn IS NULL OR b.ibsn_13 = inputIsbn);
+      AND (inputIsbn IS NULL OR b.isbn_13 = inputIsbn);
 END $$
 
 DELIMITER ;
