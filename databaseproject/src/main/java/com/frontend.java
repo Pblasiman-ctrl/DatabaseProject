@@ -1,227 +1,141 @@
 package com;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.Statement;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import javax.swing.*;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import javax.swing.table.DefaultTableModel;
+import java.awt.event.*;
+import java.sql.*;
 import java.util.Vector;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableColumn;
 
 public class frontend {
-    static final String databasePrefix = "bookstore";
+    // set up contants for database connection
+    static final String databasePrefix = "bookstore2";
     static final String netID = "dbadmin";
-    static final String hostName = "34.71.180.162";
-    static final String databaseURL = "jdbc:mysql://" + hostName + "/" + databasePrefix;
+    static final String hostName = "localhost";
+    static final String databaseURL = "jdbc:mysql://" + hostName + ":3306/" + databasePrefix
+            + "?useInformationSchema=true";
     static final String password = "QWTgqaHHpbpSAtOsTa07@";
-    static final String tableCreationSQLFile = "/workspaces/DatabaseProject/TableCreation.sql";
 
-    Connection sqlConnection;
-    String loggedInUser;
-    JPanel contentPanel;
-    JTable table;
+    // dynamic variables for the frontend
+    public Connection sqlConnection;
+    public String loggedInUser;
+    private JPanel contentPanel;
+    private JTable table;
 
+    // Main method to start the application
     public void run() {
-        this.connectToDatabase();
-        // this.createTables();
-        this.showLoginWindow();
+        connectToDatabase();
+        showLoginWindow();
     }
 
-    /*
-     * private void createTables() {
-     * String sql;
-     * try {
-     * sql = new String(Files.readAllBytes(Paths.get(tableCreationSQLFile)));
-     * } catch (IOException e) {
-     * System.out.println("Error reading SQL file: " + tableCreationSQLFile);
-     * e.printStackTrace();
-     * return;
-     * }
-     * Statement statement;
-     * try {
-     * statement = this.sqlConnection.createStatement();
-     * } catch (SQLException e) {
-     * e.printStackTrace();
-     * return;
-     * }
-     * // Split SQL statements by semicolon (basic splitting)
-     * String[] commands = sql.split("(?<!\\\\);");
-     * 
-     * for (String command : commands) {
-     * command = command.trim();
-     * if (!command.isEmpty()) {
-     * try {
-     * statement.execute(command);
-     * System.out.println("Executed SQL command: " + command);
-     * } catch (SQLException e) {
-     * e.printStackTrace();
-     * }
-     * }
-     * }
-     * }
-     */
+    // Connect to the database
     private void connectToDatabase() {
-        System.out.println("Connecting to the database...");
-        Connection connection = null;
-        Statement statement = null;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("databaseURL:" + databaseURL);
-            this.sqlConnection = DriverManager.getConnection(databaseURL, netID, password);
-            System.out.println("Successfully connected to the database");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            this.attemptConnectionClose();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            sqlConnection = DriverManager.getConnection(databaseURL, netID, password);
+            System.out.println("Connected to database.");
         } catch (Exception e) {
-            System.err.println("Database connection failed:");
             e.printStackTrace();
-            this.attemptConnectionClose();
+            attemptConnectionClose();
         }
     }
 
+    // Show the login window
     private void showLoginWindow() {
-        // Create the frame
         JFrame frame = new JFrame("Login Page");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1000, 1000);
+        frame.setSize(800, 300);
+        frame.setLocationRelativeTo(null);
 
-        // Create a panel
+        // Create a panel for the login form
         JPanel panel = new JPanel();
-        frame.getContentPane().add(panel);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Create components
-        JTextField usernameField = new JTextField("Enter username here");
+        // add username and password fields
+        panel.add(new JLabel("Username:"));
+        panel.add(Box.createVerticalStrut(5));
+        JTextField usernameField = new JTextField();
+        usernameField.setMaximumSize(new Dimension(300, 25));
+        panel.add(usernameField);
+
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(new JLabel("Password:"));
+        panel.add(Box.createVerticalStrut(5));
         JPasswordField passwordField = new JPasswordField();
+        passwordField.setMaximumSize(new Dimension(300, 25));
+        panel.add(passwordField);
+
+        // add login, register, and exit buttons
+        panel.add(Box.createVerticalStrut(15));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         JButton loginButton = new JButton("Login");
         JButton registerButton = new JButton("Register");
         JButton exitButton = new JButton("Exit");
+        buttonPanel.add(loginButton);
+        buttonPanel.add(registerButton);
+        buttonPanel.add(exitButton);
+        panel.add(buttonPanel);
 
-        // Align components to center and set preferred sizes
-        usernameField.setMaximumSize(new Dimension(200, 30));
-        passwordField.setMaximumSize(new Dimension(200, 30));
-        loginButton.setMaximumSize(new Dimension(200, 30));
-        registerButton.setMaximumSize(new Dimension(200, 30));
-        exitButton.setMaximumSize(new Dimension(200, 30));
-
-        usernameField.setAlignmentX(Component.CENTER_ALIGNMENT);
-        passwordField.setAlignmentX(Component.CENTER_ALIGNMENT);
-        registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        exitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // Add components to the panel with spacing
-        panel.add(Box.createVerticalStrut(20));
-        panel.add(usernameField);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(passwordField);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(loginButton);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(registerButton);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(exitButton);
-
-        // Add panel to frame
         frame.getContentPane().add(panel);
         frame.setVisible(true);
 
-        // Add action listener to the login button
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String username = usernameField.getText();
-                String password = new String(passwordField.getPassword());
+        // add action listeners for login button
+        loginButton.addActionListener(e -> {
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
+            if (doesUserExist(username, password)) {
+                loggedInUser = username;
+                frame.dispose();
+                showNavigation();
+            } else {
+                JOptionPane.showMessageDialog(frame,
+                        "Invalid username or password. Plese check your credentials or register a new account.");
+            }
+        });
 
-                if (frontend.this.doesUserExist(username, password)) {
-                    System.out.println("User exists, proceeding to main UI.");
-                    frontend.this.loggedInUser = username;
-                    frame.dispose(); // Close the login window
-                    frontend.this.showNavigation(); // Show the main UI
-                } else {
-                    JOptionPane.showMessageDialog(frame,
-                            "Invalid username or password. Please check your username or password or register.");
-                }
+        // add action listener for the register button
+        registerButton.addActionListener(e -> {
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
+            if (doesUserExist(username, password)) {
+                JOptionPane.showMessageDialog(frame, "User already exists.");
+            } else if (registerUser(username, password)) {
+                loggedInUser = username;
+                frame.dispose();
+                showNavigation();
+            } else {
+                JOptionPane.showMessageDialog(frame,
+                        "Registration failed. Please verify that an account with this username does not already exist.");
             }
 
         });
 
-        // Add action listener to the register button
-        registerButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String username = usernameField.getText();
-                String password = new String(passwordField.getPassword());
-
-                if (frontend.this.doesUserExist(username, password)) {
-                    JOptionPane.showMessageDialog(frame,
-                            "User already exists. Please log in or choose a different username.");
-                } else {
-                    Boolean registered = frontend.this.registerUser(username, password);
-                    if (!registered) {
-                        JOptionPane.showMessageDialog(frame, "Registration failed. Please try again.");
-                        return;
-                    } else {
-                        System.out.println("User registered successfully.");
-                        frontend.this.loggedInUser = username;
-                        frame.dispose(); // Close the login window
-                        frontend.this.showNavigation(); // Show the main UI
-                    }
-                }
-            }
+        // add action listener for the exit button
+        exitButton.addActionListener(e -> {
+            attemptConnectionClose();
+            System.exit(0);
         });
-
-        // Add action listener to the exit button
-        exitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                frontend.this.attemptConnectionClose();
-                System.exit(0);
-            }
-        });
-
-        // Set the frame to close on exit
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                frontend.this.attemptConnectionClose();
-            }
-        });
-
-        // Make the frame visible
-        frame.setVisible(true);
     }
 
+    // Show the main navigation panel
     private void showNavigation() {
+        // create the main frame and panels
         JFrame frame = new JFrame("Bookstore Management System");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 700);
-
-        // Main container with BorderLayout
+        frame.setLocationRelativeTo(null);
         JPanel mainPanel = new JPanel(new BorderLayout());
-
-        // create left navigation panel
         JPanel leftNavPanel = new JPanel();
         leftNavPanel.setLayout(new BoxLayout(leftNavPanel, BoxLayout.Y_AXIS));
-        leftNavPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        leftNavPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // create buttons to add to the left navigation panel
         JButton browseBoughtButton = new JButton("Browse Bought Books");
         JButton browseFavoritesButton = new JButton("Browse Favorite Books");
         JButton searchBooksButton = new JButton("Search Books");
-        JButton browseByFavGenresButton = new JButton("Browse Books by Favorites");
+        JButton browseByFavButton = new JButton("Browse Top Favorited Books");
 
         // add buttons to the left navigation panel
         leftNavPanel.add(browseBoughtButton);
@@ -230,286 +144,434 @@ public class frontend {
         leftNavPanel.add(Box.createVerticalStrut(10));
         leftNavPanel.add(searchBooksButton);
         leftNavPanel.add(Box.createVerticalStrut(10));
-        leftNavPanel.add(browseByFavGenresButton);
+        leftNavPanel.add(browseByFavButton);
 
-        // top bar with logout button
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // create a logout button and add it to the top right corner
         JButton logoutButton = new JButton("Logout");
         JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         logoutPanel.add(logoutButton);
-        topPanel.add(logoutPanel, BorderLayout.EAST);
 
-        // main plane
-        contentPanel = new JPanel();
-        JLabel label = new JLabel("Welcome to the Bookstore Management System!");
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setFont(new Font("SansSerif", Font.PLAIN, 18));
-        contentPanel.setLayout(new BorderLayout());
-        contentPanel.add(label, BorderLayout.CENTER);
+        // create the content panel to display a welcome message and results when loaded
+        contentPanel = new JPanel(new BorderLayout());
+        JLabel welcomeLabel = new JLabel("Welcome to the Bookstore Management System!");
+        welcomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        contentPanel.add(welcomeLabel, BorderLayout.CENTER);
 
-        // add components to the main panel
-        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(logoutPanel, BorderLayout.NORTH);
         mainPanel.add(leftNavPanel, BorderLayout.WEST);
         mainPanel.add(contentPanel, BorderLayout.CENTER);
 
-        // event listeners for buttons
-        logoutButton.addActionListener(e -> {
-            frame.dispose();
-            frontend.this.showLoginWindow();
-        });
-
-        browseBoughtButton.addActionListener(e -> {
-            String sql = "{CALL FindBooksBoughtByUser(?)}";
-            try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
-                stmt.setString(1, this.loggedInUser);
-                ResultSet rs = stmt.executeQuery();
-                // Build the model from result set
-                DefaultTableModel model = buildTableModel(rs);
-
-                // Add Action column to the model
-                model.addColumn("Action");
-                for (int i = 0; i < model.getRowCount(); i++) {
-                    model.setValueAt("Buy", i, model.getColumnCount() - 1);
-                }
-
-                // Create the JTable
-                this.table = new JTable(model);
-
-                // Set renderers/editors for the Action column (last column)
-                TableColumn actionColumn = table.getColumnModel().getColumn(table.getColumnCount() - 1);
-                actionColumn.setCellRenderer(new ButtonRenderer("Sell"));
-                actionColumn.setCellEditor(new SellButtonEditor(this, table));
-
-                // Display in scroll pane
-                JScrollPane scrollPane = new JScrollPane(table);
-                contentPanel.removeAll();
-                contentPanel.add(scrollPane, BorderLayout.CENTER);
-                contentPanel.revalidate();
-                contentPanel.repaint();
-            } catch (SQLException ex) {
-                System.err.println("SQL error during browsing bought books:");
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error retrieving bought books. " + ex.getMessage());
-            }
-            contentPanel.revalidate(); // Refresh layout
-            contentPanel.repaint(); // Refresh display
-        });
-
-        browseFavoritesButton.addActionListener(e -> {
-            String sql = "{CALL FindUsersFavorites(?)}";
-            try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
-                stmt.setString(1, this.loggedInUser);
-                ResultSet rs = stmt.executeQuery();
-
-                // Build the model from result set
-                DefaultTableModel model = buildTableModel(rs);
-
-                // Add Action column to the model
-                model.addColumn("Action");
-                for (int i = 0; i < model.getRowCount(); i++) {
-                    model.setValueAt("Buy", i, model.getColumnCount() - 1);
-                }
-
-                // Create the JTable
-                JTable table = new JTable(model);
-
-                // Set renderers/editors for the Action column (last column)
-                TableColumn actionColumn = table.getColumnModel().getColumn(table.getColumnCount() - 1);
-                actionColumn.setCellRenderer(new ButtonRenderer("Buy"));
-                actionColumn.setCellEditor(new BuyButtonEditor(this, table));
-
-                // Display in scroll pane
-                JScrollPane scrollPane = new JScrollPane(table);
-                contentPanel.removeAll();
-                contentPanel.add(scrollPane, BorderLayout.CENTER);
-                contentPanel.revalidate();
-                contentPanel.repaint();
-
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error retrieving favorites: " + ex.getMessage());
-            }
-            contentPanel.revalidate(); // Refresh layout
-            contentPanel.repaint(); // Refresh display
-        });
-
-        searchBooksButton.addActionListener(e -> {
-            frontend.this.showSearchBookPanel();
-        });
-
-        browseByFavGenresButton.addActionListener(e -> {
-            JOptionPane.showMessageDialog(frame, "Feature not yet implemented: Browse Books by Favorites.");
-        });
-
-        // if we close the window, we want to close the connection
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                frontend.this.attemptConnectionClose();
-            }
-        });
-
-        // add panel to the frame and make it visible
         frame.getContentPane().add(mainPanel);
         frame.setVisible(true);
+
+        // add action listeners for the logout button and set it to close the frame and
+        // show the login window
+        logoutButton.addActionListener(e -> {
+            frame.dispose();
+            showLoginWindow();
+        });
+
+        // add action listeners for the navigation buttons
+        browseBoughtButton.addActionListener(e -> reloadBoughtTable());
+        browseFavoritesButton.addActionListener(e -> reloadFavoritesTable());
+        searchBooksButton.addActionListener(e -> showSearchBookPanel());
+        browseByFavButton.addActionListener(e -> showTopFavoritesPanel());
     }
 
-    private boolean registerUser(String username, String password) {
-        String sql = "{CALL register_reader(?, ?)}";
-
-        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            stmt.execute();
-            System.out.println("User registered successfully.");
-            return true;
-        } catch (SQLException ex) {
-            System.err.println("SQL error during registration:");
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error registering user. " + ex.getMessage());
-            return false;
-        }
-    }
-
-    private boolean doesUserExist(String username, String password) {
-        String sql = "{CALL find_reader(?, ?, ?)}";
-
-        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            stmt.registerOutParameter(3, java.sql.Types.INTEGER);
-
-            stmt.execute();
-
-            return stmt.getInt(3) == 1;
-        } catch (SQLException ex) {
-            System.err.println("SQL error during user check:");
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error checking user credentials. " + ex.getMessage());
-            return false;
-        }
-    }
-
-    private void showSearchBookPanel() {
+    // Show the top favorites panel, which allows users to view the most favorited
+    // books
+    private void showTopFavoritesPanel() {
+        // clear previous content
         contentPanel.removeAll();
         contentPanel.setLayout(new BorderLayout());
 
-        // search panel
-        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+        // create a panel for the top favorites
+        JPanel topPanelFav = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        // add a label and a combo box to select the number of top favorites to show
+        topPanelFav.add(new JLabel("Show top:"));
+        String[] options = { "10", "20", "50", "100" };
+        JComboBox<String> comboBox = new JComboBox<>(options);
+        topPanelFav.add(comboBox);
+        contentPanel.add(topPanelFav, BorderLayout.NORTH);
 
-        JTextField titleField = new JTextField();
-        JTextField authorField = new JTextField();
-        JTextField categoryField = new JTextField();
-        JTextField isbnField = new JTextField();
-        JButton searchButton = new JButton("Search");
+        // create a panel to hold the table of results
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        contentPanel.add(tablePanel, BorderLayout.CENTER);
 
-        formPanel.add(new JLabel("Title:"));
-        formPanel.add(titleField);
-        formPanel.add(new JLabel("Author:"));
-        formPanel.add(authorField);
-        formPanel.add(new JLabel("Category:"));
-        formPanel.add(categoryField);
-        formPanel.add(new JLabel("ISBN:"));
-        formPanel.add(isbnField);
-        formPanel.add(new JLabel()); // Spacer
-        formPanel.add(searchButton);
+        // add an action listener to the combo box to reload the table when the
+        // selection changes
+        comboBox.addActionListener(ev -> reloadFavoriteTable(comboBox, tablePanel));
 
-        contentPanel.add(formPanel, BorderLayout.NORTH);
+        // load the table with 10 top favorites by default
+        comboBox.setSelectedIndex(0);
 
-        // show results panel
-        JPanel resultPanel = new JPanel(new BorderLayout());
-        contentPanel.add(resultPanel, BorderLayout.CENTER);
-
-        // add search button action listener
-        searchButton.addActionListener(ev -> {
-            resultPanel.removeAll();
-
-            String title = titleField.getText().trim();
-            String author = authorField.getText().trim();
-            String category = categoryField.getText().trim();
-            String isbn = isbnField.getText().trim();
-            /*
-             * // Call stored procedure
-             * String sql = "{CALL search_books(?, ?, ?, ?)}";
-             * 
-             * try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
-             * stmt.setString(1, title);
-             * stmt.setString(2, author);
-             * stmt.setString(3, category);
-             * stmt.setString(4, isbn);
-             * 
-             * try (ResultSet rs = stmt.executeQuery()) {
-             * JTable table = new JTable(buildTableModel(rs));
-             * table.setAutoCreateRowSorter(true);
-             * JScrollPane scrollPane = new JScrollPane(table);
-             * resultPanel.add(scrollPane, BorderLayout.CENTER);
-             * }
-             * 
-             * } catch (SQLException ex) {
-             * JOptionPane.showMessageDialog(null, "Error searching books: " +
-             * ex.getMessage());
-             * ex.printStackTrace();
-             * }
-             */
-
-            resultPanel.revalidate();
-            resultPanel.repaint();
-        });
-
+        // Load the initial table
         contentPanel.revalidate();
         contentPanel.repaint();
     }
 
-    private void attemptConnectionClose() {
-        if (this.sqlConnection != null) {
-            try {
-                if (!this.sqlConnection.isClosed()) {
-                    this.sqlConnection.close();
-                    System.out.println("Database connection closed.");
-                }
-            } catch (SQLException e) {
-                System.err.println("Failed to close connection:");
-                e.printStackTrace();
-            }
-        } else {
-            System.err.println("Connection was never established.");
+    // Register a new user in the database via SQL call to the database
+    // Returns true if registration was successful, false otherwise
+    private boolean registerUser(String username, String password) {
+        String sql = "{CALL register_reader(?, ?)}";
+        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            stmt.execute();
+            return true;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
         }
     }
 
+    // Check if a user exists in the database
+    // Returns true if the user exists, false otherwise
+    private boolean doesUserExist(String username, String password) {
+        String sql = "{CALL find_reader(?, ?, ?)}";
+        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            stmt.registerOutParameter(3, Types.INTEGER);
+            stmt.execute();
+            return stmt.getInt(3) == 1;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    // Attempt to close the SQL connection if it exists
+    private void attemptConnectionClose() {
+        if (sqlConnection != null) {
+            try {
+                if (!sqlConnection.isClosed())
+                    sqlConnection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Build a DefaultTableModel from a ResultSet
+    // Converts the ResultSet from SQL queries into a format that can be used by
+    // JTable
     private static DefaultTableModel buildTableModel(ResultSet rs) throws SQLException {
         ResultSetMetaData metaData = rs.getMetaData();
-
         int columnCount = metaData.getColumnCount();
+
         Vector<String> columnNames = new Vector<>();
-        for (int column = 1; column <= columnCount; column++) {
-            columnNames.add(metaData.getColumnName(column));
-        }
+        for (int col = 1; col <= columnCount; col++)
+            columnNames.add(metaData.getColumnName(col));
+
         Vector<Vector<Object>> data = new Vector<>();
         while (rs.next()) {
             Vector<Object> row = new Vector<>();
-            for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
-                row.add(rs.getObject(columnIndex));
-            }
+            for (int col = 1; col <= columnCount; col++)
+                row.add(rs.getObject(col));
             data.add(row);
         }
+
         return new DefaultTableModel(data, columnNames);
     }
+
+    // Reload the table of bought books for the logged-in user
     public void reloadBoughtTable() {
-    String sql = "CALL FindBooksBoughtByUser(?)"; // or your SELECT query
-    try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
-        stmt.setString(1, loggedInUser);
-        ResultSet rs = stmt.executeQuery();
+        String sql = "CALL FindBooksBoughtByUser(?)";
+        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+            // Set the logged-in user as a parameter for the SQL call
+            stmt.setString(1, loggedInUser);
+            ResultSet rs = stmt.executeQuery();
+            DefaultTableModel model = buildTableModel(rs);
 
-        TableModel model = buildTableModel(rs);
-        this.table.setModel(model);
+            // Set the last column as a button column for selling books
+            model.addColumn("Action");
+            for (int i = 0; i < model.getRowCount(); i++)
+                model.setValueAt("Sell", i, model.getColumnCount() - 1);
+            table = new JTable(model);
+            TableColumn actionCol = table.getColumnModel().getColumn(model.getColumnCount() - 1);
+            actionCol.setCellRenderer(new ButtonRenderer("Sell"));
+            actionCol.setCellEditor(new SellButtonEditor(this, table));
 
-    } catch (SQLException ex) {
-        ex.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Error loading data: " + ex.getMessage());
+            // Create a scroll pane for the table and add it to the content panel
+            JScrollPane pane = new JScrollPane(table);
+            contentPanel.removeAll();
+            contentPanel.add(pane, BorderLayout.CENTER);
+
+            // Refresh the content panel to show the new table
+            contentPanel.revalidate();
+            contentPanel.repaint();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error loading bought books: " + ex.getMessage());
+        }
+    }
+
+    // Reload the table of favorite books for the logged-in user
+    public void reloadFavoritesTable() {
+        String sql = "CALL FindUsersFavorites(?)"; // SQL procedure to get the favorite books of the logged-in user
+        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+            // execute the SQL call with the logged-in user as a parameter and build the
+            // table model
+            stmt.setString(1, loggedInUser);
+            ResultSet rs = stmt.executeQuery();
+            DefaultTableModel model = buildTableModel(rs);
+
+            // Add an action column for buying books and set the button renderer and editor
+            model.addColumn("Action");
+            for (int i = 0; i < model.getRowCount(); i++)
+                model.setValueAt("Buy", i, model.getColumnCount() - 1);
+            table = new JTable(model);
+
+            // Set the last column as a button column for buying books
+            TableColumn actionCol = table.getColumnModel().getColumn(model.getColumnCount() - 1);
+            actionCol.setCellRenderer(new ButtonRenderer("Buy"));
+            actionCol.setCellEditor(new BuyButtonEditor(this, table));
+
+            // Create a scroll pane for the table and add it to the content panel
+            JScrollPane pane = new JScrollPane(table);
+
+            // Clear the content panel and add the new table pane
+            contentPanel.removeAll();
+            contentPanel.add(pane, BorderLayout.CENTER);
+            contentPanel.revalidate();
+            contentPanel.repaint();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error loading favorites: " + ex.getMessage());
+        }
+    }
+
+    // Reload the table of top favorited books based on the selected number from the
+    // combo box
+    public void reloadFavoriteTable(JComboBox<String> comboBox, JPanel tablePanel) {
+        String sql = "CALL TopFavoritedBooks(?)";
+        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+            // Set the number of top favorites to show based on the combo box selection
+            stmt.setString(1, (String) comboBox.getSelectedItem());
+
+            // Execute the SQL call and build the table model
+            ResultSet rs = stmt.executeQuery();
+            DefaultTableModel model = buildTableModel(rs);
+
+            // Add an action column for buying books and set the button renderer and editor
+            model.addColumn("Action");
+            for (int i = 0; i < model.getRowCount(); i++)
+                model.setValueAt("Buy", i, model.getColumnCount() - 1);
+            table = new JTable(model);
+            TableColumn actionCol = table.getColumnModel().getColumn(model.getColumnCount() - 1);
+            actionCol.setCellRenderer(new ButtonRenderer("Buy"));
+            actionCol.setCellEditor(new BuyButtonEditor(this, table));
+
+            // Create a scroll pane for the table and add it to the table panel
+            JScrollPane pane = new JScrollPane(table);
+            tablePanel.removeAll();
+
+            // Add the new table pane to the table panel and refresh it
+            tablePanel.add(pane, BorderLayout.CENTER);
+            tablePanel.revalidate();
+            tablePanel.repaint();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error loading top favorites: " + ex.getMessage());
+        }
+    }
+
+    public void showSearchBookPanel() {
+        // Clear previous content
+        contentPanel.removeAll();
+        contentPanel.setLayout(new BorderLayout());
+
+        // create top panel for search inputs
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createTitledBorder("Search Books"));
+
+        // set up grid bag constraints for the form panel
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // create title label and field
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        formPanel.add(new JLabel("Title:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        JTextField titleField = new JTextField();
+        formPanel.add(titleField, gbc);
+
+        // create uthor label and field
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        formPanel.add(new JLabel("Author:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        JTextField authorField = new JTextField();
+        formPanel.add(authorField, gbc);
+
+        // create category label and field
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0;
+        formPanel.add(new JLabel("Category:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        JTextField categoryField = new JTextField();
+        formPanel.add(categoryField, gbc);
+
+        // create ISBN label and field
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        formPanel.add(new JLabel("ISBN:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        JTextField isbnField = new JTextField();
+        formPanel.add(isbnField, gbc);
+
+        // add a search button
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        JButton searchButton = new JButton("Search");
+        formPanel.add(searchButton, gbc);
+
+        // add the form panel to the content panel
+        contentPanel.add(formPanel, BorderLayout.NORTH);
+
+        // create a panel for the results of the query
+        JPanel resultPanel = new JPanel(new BorderLayout());
+        contentPanel.add(resultPanel, BorderLayout.CENTER);
+
+        // add addition listener for the search button to execute the search
+        searchButton.addActionListener(ev -> {
+            this.reloadSearchTable(titleField, authorField, categoryField, isbnField, resultPanel);
+        });
+
+        // add a listener to reload the search table when the Enter key is pressed in
+        // any of the text fields
+        KeyAdapter enterKeyListener = new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    reloadSearchTable(titleField, authorField, categoryField, isbnField, resultPanel);
+                }
+            }
+        };
+        titleField.addKeyListener(enterKeyListener);
+        authorField.addKeyListener(enterKeyListener);
+        categoryField.addKeyListener(enterKeyListener);
+        isbnField.addKeyListener(enterKeyListener);
+
+        // refresh the content panel to show the search form and results
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    // Reload the search table based on the input fields
+    public void reloadSearchTable(JTextField titleField,
+            JTextField authorField,
+            JTextField categoryField,
+            JTextField isbnField,
+            JPanel resultPanel) {
+        final String sql = "{ CALL SearchBooksMultiFilter(?, ?, ?, ?) }";
+
+        try (CallableStatement stmt = sqlConnection.prepareCall(sql)) {
+            stmt.setString(1, titleField.getText());
+            stmt.setString(2, authorField.getText());
+            stmt.setString(3, categoryField.getText());
+
+            // handle ISBN input, allowing for blank inputs since it's a BIGINT in SQL
+            String rawIsbn = isbnField.getText().trim();
+            if (rawIsbn.isBlank()) {
+                stmt.setNull(4, java.sql.Types.BIGINT);
+            } else {
+                try {
+                    long isbn = Long.parseLong(rawIsbn);
+                    stmt.setLong(4, isbn);
+                } catch (NumberFormatException nfe) {
+                    // Treat bad input as "no ISBN filter"
+                    stmt.setNull(4, java.sql.Types.BIGINT);
+                }
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                DefaultTableModel model = buildTableModel(rs);
+
+                // add action columns for buying and favoriting books
+                int buyCol = model.getColumnCount();
+                model.addColumn("Buy");
+                int favCol = model.getColumnCount();
+                model.addColumn("Favorite");
+
+                // populate action columns
+                for (int i = 0; i < model.getRowCount(); i++) {
+                    model.setValueAt("Buy/Sell", i, buyCol);
+                    model.setValueAt("Favorite/Unfavorite", i, favCol);
+                }
+
+                // create the table with the model
+                table = new JTable(model);
+
+                // add renderers and editors for action columns
+                TableColumn buyTableColumn = table.getColumnModel().getColumn(buyCol);
+                TableColumn favTableColumn = table.getColumnModel().getColumn(favCol);
+
+                buyTableColumn.setCellRenderer(new ButtonRenderer("Buy/Sell"));
+                buyTableColumn.setCellEditor(new BuyButtonEditor(this, table));
+
+                favTableColumn.setCellRenderer(new ButtonRenderer("Favorite/Unfavorite"));
+                favTableColumn.setCellEditor(new FavoriteButtonEditor(this, table));
+
+                // create a scroll pane for the table and add it to the result panel
+                JScrollPane pane = new JScrollPane(table);
+                resultPanel.removeAll();
+                resultPanel.add(pane, BorderLayout.CENTER);
+
+                // refresh the result panel to show the new table
+                resultPanel.revalidate();
+                resultPanel.repaint();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error searching books: " + ex.getMessage());
+        }
+    }
+
+    // Check if a book can be favorited by the logged-in user
+    public boolean canFavoriteBook(String isbn_13) {
+        String sql = "{CALL CanFavoriteBook(?, ?, ?)}"; // ISBN, userId, OUT canFavorite
+        try (CallableStatement stmt = this.sqlConnection.prepareCall(sql)) {
+            stmt.setString(1, isbn_13);
+            stmt.setString(2, this.loggedInUser);
+            stmt.registerOutParameter(3, java.sql.Types.BOOLEAN);
+            stmt.execute();
+            return stmt.getBoolean(3); // Retrieve the output parameter
+        } catch (SQLException ex) {
+            System.err.println("Error checking if book can be favorited:");
+            ex.printStackTrace();
+        }
+        return false;
+    }
+
+    // Check if a book can be bought by the logged-in user
+    // Returns true if the book can be bought, false otherwise
+    public boolean canBuyBook(String isbn_13) {
+        String sql = "{CALL CanSellBook(?, ?, ?)}";
+        try (CallableStatement stmt = this.sqlConnection.prepareCall(sql)) {
+            stmt.setString(1, isbn_13);
+            stmt.setString(2, this.loggedInUser);
+            stmt.registerOutParameter(3, java.sql.Types.BOOLEAN);
+            stmt.execute();
+            return !stmt.getBoolean(3);
+        } catch (SQLException ex) {
+            System.err.println("Error checking if book can be bought:");
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error checking book purchase eligibility: " + ex.getMessage());
+            return false;
+        }
     }
 }
-}
-
-
-    

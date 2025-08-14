@@ -2,25 +2,28 @@ package com;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.EventObject;
 
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 
+// SellButtonEditor class that extends ButtonEditor for selling books
 public class SellButtonEditor extends ButtonEditor {
     Connection sqlConnection;
     frontend frontend;
     String isbn_13;
 
+    // Constructor that initializes the editor with a JCheckBox, JTable, frontend instance, and label
     public SellButtonEditor(frontend frontend, JTable table) {
         super(new JCheckBox(), table, frontend, "Sell");
         this.frontend = frontend;
         this.sqlConnection = frontend.sqlConnection;
     }
 
+    // SQL query method to handle the book selling logic
+    // It checks if the book can be sold and executes the SQL procedure to sell it
+    // If the book cannot be sold, it shows an error message
     @Override
     protected void sqlQuery(frontend frontend, String isbn_13) {
         if(!canSellBook(isbn_13)) {
@@ -44,12 +47,8 @@ public class SellButtonEditor extends ButtonEditor {
         }
         frontend.reloadBoughtTable();
     }
-/*
-    @Override
-    public boolean isCellEditable(EventObject anEvent) {
-        return canSellBook(this.isbn_13);
-    }
-*/
+
+    // Method to check if the book can be sold
     private boolean canSellBook(String isbn_13) {
         String sql = "{CALL CanSellBook(?, ?, ?)}"; // ISBN, userId, OUT canSell
         try (CallableStatement stmt = frontend.sqlConnection.prepareCall(sql)) {
